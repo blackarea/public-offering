@@ -3,6 +3,7 @@ package stock.publicoffering.api.ipo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import stock.publicoffering.domain.ipo.Ipo;
 
@@ -18,11 +19,12 @@ public class IpoController {
 
     @GetMapping("/ipo")
     public List<Ipo> getIpoFirstPage() throws IOException {
-        return ipoService.getIpoFirstPage();
+        return ipoService.getIpoPage(1);
     }
 
     @GetMapping("/ipo-save")
-    public void saveIpo() throws IOException {
-        ipoService.saveIpo();
+    public void saveIpo(@RequestParam(name = "page", defaultValue = "1") int page) throws IOException {
+        ipoService.saveIpoPage(page);
     }
+
 }

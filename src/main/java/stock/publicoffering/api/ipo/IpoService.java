@@ -8,8 +8,10 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import stock.publicoffering.api.jsoup.JsoupService;
 import stock.publicoffering.domain.ipo.Ipo;
 import stock.publicoffering.domain.ipo.IpoRepository;
+import stock.publicoffering.domain.ipo.MyIpoCompany;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -22,46 +24,74 @@ import java.util.List;
 @Service
 public class IpoService {
 
-    @Value("${ipo.ipo_url}")
-    private String IPO_URL;
+    @Value("${ipo.list_page_url}")
+    private String LIST_PAGE_URL;
+    @Value("${ipo.site_url}")
+    private String SITE_URL;
+    private static final int MANDATORY_HOLDING_RATIO = 5;
+
     private final IpoRepository ipoRepository;
+    private final JsoupService jsoupService;
 
-    @Transactional(readOnly = true)
-    public List<Ipo> getIpoFirstPage() throws IOException {
-        Document doc = Jsoup.connect(IPO_URL).get();
+    public List<Ipo> getMatchedIpos(LocalDate localDate) {
+        List<Ipo> matchedIpos = getIpoPage(1);
+
+        return matchedIpos.stream()
+                .filter(ipo -> ipo.getOfferingStartDate().equals(localDate) &&
+                        MyIpoCompany.contains(ipo.getCompany()) && isSatisfiedMandatoryHoldingRatio(ipo.getDetailLink()))
+                .toList();
+    }
+
+    public void saveMatchedIpos(List<Ipo> matchedIpos) {
+        matchedIpos.forEach(ipo -> {
+            Element targetRow = jsoupService.getDemandForeCastResultRow(SITE_URL + ipo.getDetailLink());
+            String competitionRatio = targetRow.select("td:nth-child(2) table tr td:nth-child(2)").text();
+            float ipoHoldingRatio = Float.parseFloat(targetRow.select("td:nth-child(2) table tr td:nth-child(4)").text().replace("%", ""));
+            ipo.setCompetitionRateAndHoldingRatio(competitionRatio, ipoHoldingRatio);
+        });
+        ipoRepository.saveAll(matchedIpos);
+    }
+
+    public boolean isSatisfiedMandatoryHoldingRatio(String detailLink) {
+        Element targetRow = jsoupService.getDemandForeCastResultRow(SITE_URL + detailLink);
+        System.out.println(targetRow);
+        float ipoHoldingRatio = Float.parseFloat(targetRow.select("td:nth-child(2) table tr td:nth-child(4)").text().replace("%", ""));
+        return ipoHoldingRatio > MANDATORY_HOLDING_RATIO;
+    }
+
+    public void saveIpoPage(int page) {
+        List<Ipo> ipoFirstPage = getIpoPage(page);
+        ipoRepository.saveAll(ipoFirstPage);
+    }
+
+    public List<Ipo> getIpoPage(int page) {
+        Document doc = jsoupService.getIpoDocument(LIST_PAGE_URL + "&page=" + Math.max(page, 1));
+
         Element tbody = doc.select("table[summary=공모주 청약일정] tbody").first();
-
         Elements rows = tbody.select("tr");
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
 
         List<Ipo> ipos = new ArrayList<>();
 
-        for (Element row : rows) {
+        rows.stream().map(row -> {
             Elements cols = row.select("td");
 
             String[] offeringPeriod = cols.get(1).text().split("~");
             String year = offeringPeriod[0].substring(0, 5);
-            LocalDate offeringStartDate = LocalDate.parse(offeringPeriod[0], dateFormatter);
-            LocalDate offeringEndDate = LocalDate.parse(year + offeringPeriod[1], dateFormatter);
 
-            Ipo ipo = Ipo.builder()
+            return Ipo.builder()
                     .ipoName(cols.get(0).text())
-                    .offeringStartDate(offeringStartDate)
-                    .offeringEndDate(offeringEndDate)
+                    .offeringStartDate(LocalDate.parse(offeringPeriod[0], dateFormatter))
+                    .offeringEndDate(LocalDate.parse(year + offeringPeriod[1], dateFormatter))
                     .finalPrice(cols.get(2).text())
                     .expectedPrice(cols.get(3).text())
                     .competitionRate(cols.get(4).text())
                     .company(cols.get(5).text())
-                    .link(cols.get(6).select("a").attr("href"))
+                    .detailLink(cols.get(6).select("a").attr("href"))
                     .build();
-            ipos.add(ipo);
-        }
-        return ipos;
-    }
+        }).forEach(ipos::add);
 
-    public void saveIpo() throws IOException {
-        List<Ipo> ipoFirstPage = getIpoFirstPage();
-        ipoRepository.saveAll(ipoFirstPage);
+        return ipos;
     }
 
 }

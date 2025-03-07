@@ -1,12 +1,10 @@
 package stock.publicoffering.domain.ipo;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import lombok.*;
 import org.hibernate.annotations.Comment;
 
 import java.time.LocalDate;
@@ -16,6 +14,10 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Getter
 @Entity
+@ToString
+@Table(indexes = {
+        @Index(name = "idx_offering_start_date", columnList = "offeringStartDate"),
+})
 public class Ipo {
 
     @Id
@@ -41,5 +43,17 @@ public class Ipo {
     private String company;
 
     @Comment("공모주 세부 링크")
-    private String link;
+    private String detailLink;
+
+    @Comment("기관 경쟁률")
+    private String competitionRatingByInstitution;
+
+    @Comment("의무 보유 확약 비율")
+    private float mandatoryHoldingRatio;
+
+    public void setCompetitionRateAndHoldingRatio(String competitionRateAndHoldingRatio, float mandatoryHoldingRatio) {
+        this.competitionRatingByInstitution = competitionRateAndHoldingRatio;
+        this.mandatoryHoldingRatio = mandatoryHoldingRatio;
+    }
+
 }
