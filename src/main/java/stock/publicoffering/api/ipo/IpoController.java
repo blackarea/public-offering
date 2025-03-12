@@ -19,7 +19,7 @@ public class IpoController {
 
     @GetMapping("/ipo")
     public List<Ipo> getIpoFirstPage() throws IOException {
-        return ipoService.getIpoPage(1);
+        return ipoService.getIposFromSite(1);
     }
 
     @GetMapping("/ipo-save")

@@ -21,13 +21,13 @@ public class IpoScheduler {
     @Scheduled(cron = "0 0 9 * * *")
     public void sendIpoAlert() {
         //find matched ipos
-        List<Ipo> matchedIpos = ipoService.getMatchedIpos(LocalDate.now());
-
-        //alert to me
-        //do something
+        List<Ipo> matchedIpos = ipoService.getMatchedIposFromFirstPage(LocalDate.now());
 
         //save matched ipos
         ipoService.saveMatchedIpos(matchedIpos);
+
+        //alert to me
+        //do something
     }
 
 }

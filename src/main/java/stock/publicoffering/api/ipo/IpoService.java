@@ -1,8 +1,6 @@
 package stock.publicoffering.api.ipo;
 
 import lombok.RequiredArgsConstructor;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +11,6 @@ import stock.publicoffering.domain.ipo.Ipo;
 import stock.publicoffering.domain.ipo.IpoRepository;
 import stock.publicoffering.domain.ipo.MyIpoCompany;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -33,8 +30,8 @@ public class IpoService {
     private final IpoRepository ipoRepository;
     private final JsoupService jsoupService;
 
-    public List<Ipo> getMatchedIpos(LocalDate localDate) {
-        List<Ipo> matchedIpos = getIpoPage(1);
+    public List<Ipo> getMatchedIposFromFirstPage(LocalDate localDate) {
+        List<Ipo> matchedIpos = getIposFromSite(1);
 
         return matchedIpos.stream()
                 .filter(ipo -> ipo.getOfferingStartDate().equals(localDate) &&
@@ -54,21 +51,18 @@ public class IpoService {
 
     public boolean isSatisfiedMandatoryHoldingRatio(String detailLink) {
         Element targetRow = jsoupService.getDemandForeCastResultRow(SITE_URL + detailLink);
-        System.out.println(targetRow);
         float ipoHoldingRatio = Float.parseFloat(targetRow.select("td:nth-child(2) table tr td:nth-child(4)").text().replace("%", ""));
         return ipoHoldingRatio > MANDATORY_HOLDING_RATIO;
     }
 
     public void saveIpoPage(int page) {
-        List<Ipo> ipoFirstPage = getIpoPage(page);
+        List<Ipo> ipoFirstPage = getIposFromSite(page);
         ipoRepository.saveAll(ipoFirstPage);
     }
 
-    public List<Ipo> getIpoPage(int page) {
-        Document doc = jsoupService.getIpoDocument(LIST_PAGE_URL + "&page=" + Math.max(page, 1));
-
-        Element tbody = doc.select("table[summary=공모주 청약일정] tbody").first();
-        Elements rows = tbody.select("tr");
+    public List<Ipo> getIposFromSite(int page) {
+        Element ipoTbody = jsoupService.getIpoTbody(LIST_PAGE_URL + "&page=" + Math.max(page, 1));
+        Elements rows = ipoTbody.select("tr");
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
 
         List<Ipo> ipos = new ArrayList<>();

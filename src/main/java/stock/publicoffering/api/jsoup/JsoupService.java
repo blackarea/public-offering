@@ -10,14 +10,18 @@ import java.io.IOException;
 @Service
 public class JsoupService {
 
-    public Document getIpoDocument(String detailLink) {
+    public Document getIpoDocument(String link) {
         Document doc;
         try {
-            doc = Jsoup.connect(detailLink).get();
+            doc = Jsoup.connect(link).get();
         } catch (IOException e) {
             throw new RuntimeException("공모주 document를 가져오는데 실패했습니다.");
         }
         return doc;
+    }
+
+    public Element getIpoTbody(String link) {
+        return getIpoDocument(link).select("table[summary=공모주 청약일정] tbody").first();
     }
 
     /**
