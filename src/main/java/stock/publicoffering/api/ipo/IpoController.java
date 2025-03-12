@@ -22,9 +22,4 @@ public class IpoController {
         return ipoService.getIposFromSite(1);
     }
 
-    @GetMapping("/ipo-save")
-    public void saveIpo(@RequestParam(name = "page", defaultValue = "1") int page) throws IOException {
-        ipoService.saveIpoPage(page);
-    }
-
 }

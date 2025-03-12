@@ -7,3 +7,6 @@ GET localhost:8080/ipo-save
 
 ### ipo-save-page
 GET localhost:8080/ipo-save?page=1
+
+### discord
+POST localhost:8080/discord

@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
-@Transactional
 @Service
 public class IpoService {
 
@@ -25,39 +24,31 @@ public class IpoService {
     private String LIST_PAGE_URL;
     @Value("${ipo.site_url}")
     private String SITE_URL;
-    private static final int MANDATORY_HOLDING_RATIO = 5;
+    private static final int MANDATORY_HOLDING_RATIO = 0;
 
     private final IpoRepository ipoRepository;
     private final JsoupService jsoupService;
 
+    @Transactional
+    public void saveIpos(List<Ipo> ipos) {
+        ipoRepository.saveAll(ipos);
+    }
+
+    @Transactional(readOnly = true)
     public List<Ipo> getMatchedIposFromFirstPage(LocalDate localDate) {
         List<Ipo> matchedIpos = getIposFromSite(1);
 
         return matchedIpos.stream()
                 .filter(ipo -> ipo.getOfferingStartDate().equals(localDate) &&
                         MyIpoCompany.contains(ipo.getCompany()) && isSatisfiedMandatoryHoldingRatio(ipo.getDetailLink()))
+                .map(this::updateRatio)
                 .toList();
-    }
-
-    public void saveMatchedIpos(List<Ipo> matchedIpos) {
-        matchedIpos.forEach(ipo -> {
-            Element targetRow = jsoupService.getDemandForeCastResultRow(SITE_URL + ipo.getDetailLink());
-            String competitionRatio = targetRow.select("td:nth-child(2) table tr td:nth-child(2)").text();
-            float ipoHoldingRatio = Float.parseFloat(targetRow.select("td:nth-child(2) table tr td:nth-child(4)").text().replace("%", ""));
-            ipo.setCompetitionRateAndHoldingRatio(competitionRatio, ipoHoldingRatio);
-        });
-        ipoRepository.saveAll(matchedIpos);
     }
 
     public boolean isSatisfiedMandatoryHoldingRatio(String detailLink) {
         Element targetRow = jsoupService.getDemandForeCastResultRow(SITE_URL + detailLink);
         float ipoHoldingRatio = Float.parseFloat(targetRow.select("td:nth-child(2) table tr td:nth-child(4)").text().replace("%", ""));
         return ipoHoldingRatio > MANDATORY_HOLDING_RATIO;
-    }
-
-    public void saveIpoPage(int page) {
-        List<Ipo> ipoFirstPage = getIposFromSite(page);
-        ipoRepository.saveAll(ipoFirstPage);
     }
 
     public List<Ipo> getIposFromSite(int page) {
@@ -86,6 +77,14 @@ public class IpoService {
         }).forEach(ipos::add);
 
         return ipos;
+    }
+
+    private Ipo updateRatio(Ipo ipo) {
+        Element targetRow = jsoupService.getDemandForeCastResultRow(SITE_URL + ipo.getDetailLink());
+        String competitionRatio = targetRow.select("td:nth-child(2) table tr td:nth-child(2)").text();
+        float ipoHoldingRatio = Float.parseFloat(targetRow.select("td:nth-child(2) table tr td:nth-child(4)").text().replace("%", ""));
+        ipo.setCompetitionRateAndHoldingRatio(competitionRatio, ipoHoldingRatio);
+        return ipo;
     }
 
 }

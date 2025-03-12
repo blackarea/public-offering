@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Comment;
+import stock.publicoffering.domain.common.BaseTimeEntity;
 
 import java.time.LocalDate;
 
@@ -20,7 +21,7 @@ import java.time.LocalDate;
 @Table(indexes = {
         @Index(name = "idx_offering_start_date", columnList = "offeringStartDate"),
 })
-public class Ipo {
+public class Ipo extends BaseTimeEntity {
 
     @Id
     @Comment("공모주명")
