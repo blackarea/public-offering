@@ -30,6 +30,7 @@ jobs:
       with:
         gradle-version: 8.12
 
+    - run: chmod +x ./gradlew
     - run: ./gradlew build
 
     - name: Upload Artifact
