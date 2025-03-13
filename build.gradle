@@ -13,6 +13,15 @@ java {
     }
 }
 
+bootJar{
+    archiveFileName = "${rootProject.name}.jar"
+}
+
+//disable plain.jar
+tasks.named("jar") {
+    enabled = false
+}
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor

@@ -24,7 +24,7 @@ public class IpoService {
     private String LIST_PAGE_URL;
     @Value("${ipo.site_url}")
     private String SITE_URL;
-    private static final int MANDATORY_HOLDING_RATIO = 0;
+    private static final int MANDATORY_HOLDING_RATIO = 5;
 
     private final IpoRepository ipoRepository;
     private final JsoupService jsoupService;
