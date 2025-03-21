@@ -57,6 +57,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
 
+      - name: Get GitHub Actions IP
+        id: ip
+        run: |
+          export IP=$(curl -s https://api.ipify.org)
+          echo "IP Address: $IP"
+          echo "::set-output name=ipv4::$IP"
+
       - name: Add Github Actions IP to Security group
         run: |
           aws ec2 authorize-security-group-ingress --region ap-northeast-2 --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
