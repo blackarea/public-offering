@@ -26,6 +26,7 @@ jobs:
           echo ${{ secrets.APPLICATION_TEST_YML }} > src/test/resources/application.yml
 
     - run: ls -l src/test/resources
+    - run: cat src/main/resources/application.yml
     - run: cat src/test/resources/application.yml
 
     - name: Setup Gradle
