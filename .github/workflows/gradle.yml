@@ -49,6 +49,12 @@ jobs:
         with:
           name: build-artifact
           path: ./
+          
+      - name: Check downloaded files
+        run: |
+          ls -al ./  # 현재 디렉토리 확인
+          ls -al ./build/libs  # build/libs 디렉토리 확인
+
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
