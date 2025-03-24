@@ -20,13 +20,10 @@ jobs:
 
     - name: Set YML
       run: |
-          mkdir -p src/main/resources
-          mkdir -p src/test/resources
-          echo ${{ secrets.APPLICATION_PROD_YML }} > src/main/resources/application.yml
-          echo ${{ secrets.APPLICATION_TEST_YML }} > src/test/resources/application.yml
-
-    - run: ls -l src/test/resources
-    - run: cat src/test/resources/application.yml
+        mkdir -p src/main/resources
+        mkdir -p src/test/resources
+        echo ${{ secrets.APPLICATION_PROD_YML }} | base64 --decode > src/main/resources/application.yml
+        echo ${{ secrets.APPLICATION_TEST_YML }} | base64 --decode > src/test/resources/application.yml
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
@@ -36,26 +33,38 @@ jobs:
     - run: chmod +x ./gradlew
     - run: ./gradlew build
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
+    - name: Build Docker image
+      run: |
+        docker build -t ${{ secrets.DOCKERHUB_NICKNAME }}/stock-back:latest .
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
       with:
-        name: build-artifact
-        path: build/libs/*.jar
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Push Docker image to Docker Hub
+      run: |
+        docker push ${{ secrets.DOCKERHUB_NICKNAME }}/stock-back:latest
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          name: build-artifact
-          path: ./
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Get Public IP
+        id: ip
+        uses: haythem/public-ip@v1.3
 
       - name: Add Github Actions IP to Security group
         run: |
-          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
-
+          aws ec2 authorize-security-group-ingress --region ap-northeast-2 --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
       - name: Deploy To Server
         uses: appleboy/ssh-action@v1.2.2
@@ -63,11 +72,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            mkdir -p /home/ubuntu/stock
-            mv *.jar /home/ubuntu/stock/stock.jar
-            cd /home/ubuntu/stock
-            nohup java -jar stock.jar > stock.log 2>&1 &
+          script: ./deploy.sh
 
       - name: Remove Github Actions IP From Security Group
         run: |
