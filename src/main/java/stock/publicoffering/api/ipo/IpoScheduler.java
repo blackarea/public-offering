@@ -1,6 +1,7 @@
 package stock.publicoffering.api.ipo;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import stock.publicoffering.core.webhook.DiscordFeignClient;
@@ -10,6 +11,7 @@ import stock.publicoffering.domain.ipo.Ipo;
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class IpoScheduler {
@@ -28,6 +30,7 @@ public class IpoScheduler {
 
         //ipo가 없으면 종료
         if (matchedIpos.isEmpty()) {
+            log.info("Today Matched ipos: {}", "No matched ipos");
             return;
         }
 
@@ -41,6 +44,7 @@ public class IpoScheduler {
 
         //save matched ipos
         ipoService.saveIpos(matchedIpos);
+        log.info("Today Matched ipos: {}", discordMessageBuilder);
 
         //alert to me
         discordFeignClient.sendMessage(new DiscordMessage(discordMessageBuilder.toString()));

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import stock.publicoffering.api.jsoup.JsoupService;
+import stock.publicoffering.api.ipo.jsoup.JsoupIpoService;
 import stock.publicoffering.domain.ipo.Ipo;
 
 import java.time.LocalDate;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 class IpoServiceTest {
 
     @MockitoBean
-    protected JsoupService jsoupService;
+    protected JsoupIpoService jsoupIpoService;
 
     @Autowired
     private IpoService ipoService;
@@ -38,8 +38,8 @@ class IpoServiceTest {
         Element element = new Element(Tag.valueOf("tbody"), "").html(iposHtml);
         Element successElement = new Element(Tag.valueOf("tr"), "").html(ipoDetailHtml);
         // when
-        when(jsoupService.getIpoTbody(any(String.class))).thenReturn(element);
-        when(jsoupService.getDemandForeCastResultRow(any(String.class))).thenReturn(successElement);
+        when(jsoupIpoService.getIpoTbody(any(String.class))).thenReturn(element);
+        when(jsoupIpoService.getDemandForeCastResultRow(any(String.class))).thenReturn(successElement);
         List<Ipo> matchedIpos = ipoService.getMatchedIposFromFirstPage(now);
         // then
 
@@ -57,12 +57,12 @@ class IpoServiceTest {
 
         // when, then
         // success
-        when(jsoupService.getDemandForeCastResultRow(any(String.class))).thenReturn(successElement);
+        when(jsoupIpoService.getDemandForeCastResultRow(any(String.class))).thenReturn(successElement);
         boolean satisfiedMandatoryHoldingRatio = ipoService.isSatisfiedMandatoryHoldingRatio("");
         assertThat(satisfiedMandatoryHoldingRatio).isTrue();
 
         // fail
-        when(jsoupService.getDemandForeCastResultRow(any(String.class))).thenReturn(failElement);
+        when(jsoupIpoService.getDemandForeCastResultRow(any(String.class))).thenReturn(failElement);
         boolean unsatisfiedMandatoryHoldingRatio = ipoService.isSatisfiedMandatoryHoldingRatio("");
         assertThat(unsatisfiedMandatoryHoldingRatio).isFalse();
     }

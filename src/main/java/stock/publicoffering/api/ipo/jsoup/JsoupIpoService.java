@@ -1,4 +1,4 @@
-package stock.publicoffering.api.jsoup;
+package stock.publicoffering.api.ipo.jsoup;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 
 @Service
-public class JsoupService {
+public class JsoupIpoService {
 
     public Document getIpoDocument(String link) {
         Document doc;

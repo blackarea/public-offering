@@ -2,6 +2,7 @@ package stock.publicoffering.core.webhook;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import stock.publicoffering.api.ipo.IpoScheduler;
 
@@ -9,11 +10,11 @@ import stock.publicoffering.api.ipo.IpoScheduler;
 @RestController
 public class DiscordTestController {
 
-    private final IpoScheduler ipoScheduler;
+    private final DiscordFeignClient discordFeignClient;
 
     @PostMapping("/discord")
-    public void dt(){
-        ipoScheduler.sendIpoAlert();
+    public void discordTest(@RequestParam("message") String message) {
+        discordFeignClient.sendMessage(new DiscordMessage(message));
     }
 
 }
