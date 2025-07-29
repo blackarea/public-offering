@@ -37,8 +37,10 @@ public class IpoScheduler {
         StringBuilder discordMessageBuilder = new StringBuilder();
         for (Ipo ipo : matchedIpos) {
             discordMessageBuilder.append(String.format(
-                    "공모주: [%s], 가격 : %s, 의무보유확약 : %s%%, 기관경쟁률 : %s, 주간사 : %s\n",
-                    ipo.getIpoName(), ipo.getFinalPrice(), ipo.getMandatoryHoldingRatio(), ipo.getCompetitionRatingByInstitution(), ipo.getCompany()
+                    "공모주: [%s], 가격 : %s, 의무보유확약 : %s%%, 공모 마감 날짜 : %s," +
+                            " 기관경쟁률 : %s, 주간사 : %s, 상장일 :%s\n",
+                    ipo.getIpoName(), ipo.getFinalPrice(), ipo.getMandatoryHoldingRatio(), ipo.getOfferingEndDate(),
+                    ipo.getCompetitionRatingByInstitution(), ipo.getCompany(), ipo.getListingDate()
             ));
         }
 

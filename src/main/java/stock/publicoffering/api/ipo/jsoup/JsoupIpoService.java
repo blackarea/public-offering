@@ -25,14 +25,14 @@ public class JsoupIpoService {
     }
 
     /**
-     * 청약일정결과에서 "수요예측결과"를 포함한 tr을 찾아 반환한다.
+     * 청약 일정에서 category를 포함한 tr을 찾아 반환한다.
      */
-    public Element getDemandForeCastResultRow(String detailLink) {
+    public Element extractCategoryTr(String detailLink, String category) {
         Document doc = getIpoDocument(detailLink);
         Element tbody = doc.select("table[summary=공모청약일정] tbody").first();
         return tbody.select("tr").stream()
-                .filter(row -> row.select("td").stream().anyMatch(td -> td.text().contains("수요예측결과")))
+                .filter(row -> row.select("td").stream().anyMatch(td -> td.text().contains(category)))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("청약일정에서 수요예측결과를 포함한 tr을 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("청약일정에서 "+ category +"를 포함한 tr을 찾을 수 없습니다."));
     }
 }

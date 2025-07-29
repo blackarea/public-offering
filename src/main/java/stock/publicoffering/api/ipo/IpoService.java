@@ -25,6 +25,8 @@ public class IpoService {
     @Value("${ipo.site_url}")
     private String SITE_URL;
     private static final int MANDATORY_HOLDING_RATIO = 5;
+    private static final String DEMAND_FORECAST_RESULT = "수요예측결과";
+    private static final String LISTING_DATE = "상장일";
 
     private final IpoRepository ipoRepository;
     private final JsoupIpoService jsoupIpoService;
@@ -42,13 +44,25 @@ public class IpoService {
                 .filter(ipo -> ipo.getOfferingStartDate().equals(localDate) &&
                         MyIpoCompany.contains(ipo.getCompany()) && isSatisfiedMandatoryHoldingRatio(ipo.getDetailLink()))
                 .map(this::updateRatio)
+                .map(this::updateListingDate)
                 .toList();
     }
 
     public boolean isSatisfiedMandatoryHoldingRatio(String detailLink) {
-        Element targetRow = jsoupIpoService.getDemandForeCastResultRow(SITE_URL + detailLink);
+        Element targetRow = jsoupIpoService.extractCategoryTr(SITE_URL + detailLink, DEMAND_FORECAST_RESULT);
         float ipoHoldingRatio = Float.parseFloat(targetRow.select("td:nth-child(2) table tr td:nth-child(4)").text().replace("%", ""));
         return ipoHoldingRatio > MANDATORY_HOLDING_RATIO;
+    }
+
+    private Ipo updateListingDate(Ipo ipo) {
+        ipo.setListingDate(getListingDate(ipo.getDetailLink()));
+        return ipo;
+    }
+
+    public String getListingDate(String detailLink) {
+        Element targetRow = jsoupIpoService.extractCategoryTr(SITE_URL + detailLink, LISTING_DATE);
+        Element dateCell = targetRow.select("td").get(1);
+        return dateCell.text().trim();
     }
 
     public List<Ipo> getIposFromSite(int page) {
@@ -80,7 +94,7 @@ public class IpoService {
     }
 
     private Ipo updateRatio(Ipo ipo) {
-        Element targetRow = jsoupIpoService.getDemandForeCastResultRow(SITE_URL + ipo.getDetailLink());
+        Element targetRow = jsoupIpoService.extractCategoryTr(SITE_URL + ipo.getDetailLink(), DEMAND_FORECAST_RESULT);
         String competitionRatio = targetRow.select("td:nth-child(2) table tr td:nth-child(2)").text();
         float ipoHoldingRatio = Float.parseFloat(targetRow.select("td:nth-child(2) table tr td:nth-child(4)").text().replace("%", ""));
         ipo.setCompetitionRateAndHoldingRatio(competitionRatio, ipoHoldingRatio);

@@ -52,6 +52,10 @@ public class Ipo extends BaseTimeEntity {
     @Comment("의무 보유 확약 비율")
     private float mandatoryHoldingRatio;
 
+    @Setter
+    @Comment("상장일")
+    private String listingDate;
+
     public void setCompetitionRateAndHoldingRatio(String competitionRateAndHoldingRatio, float mandatoryHoldingRatio) {
         this.competitionRatingByInstitution = competitionRateAndHoldingRatio;
         this.mandatoryHoldingRatio = mandatoryHoldingRatio;
